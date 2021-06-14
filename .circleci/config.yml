@@ -115,7 +115,7 @@ jobs:
             echo "Backend testing started"
             cd backend
             npm install 
-            echo "Testing Brontend"
+            echo "Testing Backend"
             npm run test
       - save_cache:
           paths: [backend/node_modules]
@@ -136,16 +136,34 @@ jobs:
           name: Frontend Scan
           command: |
             echo "Install dependencies"
+            cd frontend
+            npm install 
+            npm audit fix --audit-level=critical --force
+      - save_cache:
+          paths: [frontend/node_modules]
+          key: frontend-scan
 
-      
-
-  #scan-backend:
-    #docker:
-      ## Docker image here
-    #steps:
-      ## Checkout code from git
-      ## Restore from cache
-      ## Your job code here
+  scan-backend:
+    docker:
+      # Docker image here
+      - image: circleci/node:13.8.0
+    steps:
+      # Checkout code from git
+      - checkout
+      # Restore from cache
+      - restore_from:
+          keys: [backend-scan]
+      # Your job code here
+      - run:
+          name: Backend Scan
+          command: |
+            echo "Install dependencies"
+            cd backend
+            npm install 
+            npm audit fix --audit-level=critical --force
+      - save_cache:
+          paths: [backend/node_modules]
+          key: backend-scan
 
   #deploy-infrastructure:
     #docker:
@@ -322,10 +340,10 @@ workflows:
           requires: [build-frontend]
       - test-backend:
           requires: [build-backend]
-      # - scan-backend:
-      #     requires: [build-backend]
-      # - scan-frontend:
-      #     requires: [build-frontend]
+      - scan-backend:
+          requires: [build-backend]
+      - scan-frontend:
+          requires: [build-frontend]
       # - deploy-infrastructure:
       #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]
       #     filters:
