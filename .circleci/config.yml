@@ -1,7 +1,7 @@
 version: 2.1
 
 commands:
-  destroy-environment:
+  destroy-stacks:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
     parameters:
       workflow_id:
@@ -11,7 +11,7 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
-            aws cloudformation delete-stack --stack-name cicd-backend<<parameters.workflow_id>>
+            aws cloudformation delete-stack --stack-name backend-stack<<parameters.workflow_id>>
             aws cloudformation delete-stack --stack-name cicd-frontend<<parameters.workflow_id>>
             aws s3 rb s3://udapeople-<<parameters.workflow_id>>
 
@@ -190,17 +190,21 @@ jobs:
               --parameter-overrides ID="$CIRCLE_WORKFLOW_ID"  
 
       - run:
-          name: cat ip to ansible inventory
+          name: put ip to ansible inventory text file
           command: |
             aws ec2 describe-instances \
                   --query 'Reservations[*].Instances[*].PublicIpAddress' \
                   --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
                   --output text >> .circleci/ansible/inventory.txt
+
       - persist_to_workspace:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
             - project/backend/
+
+      - destroy-stacks:
+          workflow_id: ${CIRCLE_WORKFLOW_ID}
 
       # Here's where you will add some code to rollback on failure      
 
