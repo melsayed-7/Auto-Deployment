@@ -11,9 +11,9 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
-            aws cloudformation delete-stack --stack-name backend-stack<<parameters.workflow_id>>
-            aws cloudformation delete-stack --stack-name cicd-frontend<<parameters.workflow_id>>
-            aws s3 rb s3://udapeople-<<parameters.workflow_id>>
+            aws cloudformation delete-stack --stack-name frontend-stack-<<parameters.workflow_id>>
+            aws cloudformation delete-stack --stack-name backend-stack-<<parameters.workflow_id>>
+            # aws s3 rb s3://udapeople-<<parameters.workflow_id>>
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
@@ -89,7 +89,7 @@ jobs:
           command: |
             echo "Frontend testing started"
             cd frontend
-            npm install 
+            # npm install 
             echo "Testing Frontend"
             npm run test
       - save_cache:
@@ -114,7 +114,7 @@ jobs:
           command: |
             echo "Backend testing started"
             cd backend
-            npm install 
+            # npm install 
             echo "Testing Backend"
             npm run test
       - save_cache:
@@ -137,7 +137,7 @@ jobs:
           command: |
             echo "Install dependencies"
             cd frontend
-            npm install 
+            # npm install 
             npm audit fix --audit-level=critical --force
       - save_cache:
           paths: [frontend/node_modules]
@@ -159,7 +159,7 @@ jobs:
           command: |
             echo "Install dependencies"
             cd backend
-            npm install 
+            # npm install 
             npm audit fix --audit-level=critical --force
       - save_cache:
           paths: [backend/node_modules]
@@ -203,8 +203,8 @@ jobs:
             - project/.circleci/ansible/inventory.txt
             - project/backend/
 
-      - destroy-stacks:
-          workflow_id: ${CIRCLE_WORKFLOW_ID}
+      # - destroy-stacks:
+      #     workflow_id: ${CIRCLE_WORKFLOW_ID}
 
       # Here's where you will add some code to rollback on failure      
 
