@@ -13,7 +13,7 @@ commands:
           command: |
             aws cloudformation delete-stack --stack-name frontend-stack-<<parameters.workflow_id>>
             aws cloudformation delete-stack --stack-name backend-stack-<<parameters.workflow_id>>
-            # aws s3 rb s3://udapeople-<<parameters.workflow_id>>
+            aws s3 rb s3://udapeople-<<parameters.workflow_id>>
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
@@ -214,24 +214,35 @@ jobs:
 
       # Here's where you will add some code to rollback on failure      
 
-  #configure-infrastructure:
-    #docker:
-      ## Docker image here that supports Ansible
-    #steps:
-      ## Checkout code from git
-      ## Add ssh keys with fingerprint
-      ## attach workspace
-      #- run:
-          #name: Install dependencies
-          #command: |
-            ## Your code here
-            #exit 1
-      #- run:
-          #name: Configure server
-          #command: |
-            ## Your code here
-            #exit 1
-      ## Here's where you will add some code to rollback on failure      
+  configure-infrastructure:
+    docker:
+      # Docker image here that supports Ansible
+      - image: python:3.7-alpine3.11
+
+    steps:
+      # Checkout code from git
+      - checkout
+
+      # Add ssh keys with fingerprint
+      - add_ssh_keys:
+          fingerprints: ["27:3e:55:11:d5:3f:02:77:42:ee:1b:f3:5b:05:44:0e"]
+
+      # attach workspace
+      - attach_workspace:
+          at: ~/
+
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update ansible
+
+      - run:
+          name: Configure server
+          command: |
+            # Your code here
+            cd .circleci/ansible
+            ansible-playbook -i inventory.txt configure-server.yml
+      # Here's where you will add some code to rollback on failure      
 
   #run-migrations:
     #docker:
@@ -365,8 +376,8 @@ workflows:
             branches:
               only: [main]
 
-      # - configure-infrastructure:
-      #     requires: [deploy-infrastructure]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
       # - run-migrations:
       #     requires: [configure-infrastructure]
       # - deploy-frontend:
