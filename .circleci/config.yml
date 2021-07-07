@@ -95,8 +95,6 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-test
-          
-        
                 
   test-backend:
     docker:
@@ -305,43 +303,97 @@ jobs:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
      # Here's where you will add some code to rollback on failure      
 
-  #deploy-frontend:
-    #docker:
-      ## Docker image here that supports AWS CLI
-    #steps:
-      ## Checkout code from git
-      #- run:
-          #name: Install dependencies
-          #command: |
-            ## your code here
-      #- run:
-          #name: Get backend url
-          #command: |
-            ## your code here
-            #export API_URL="http://${BACKEND_IP}:3030"
-            #echo "${API_URL}"
-      #- run:
-          #name: Deploy frontend objects
-          #command: |
-            ## your code here
-      ## Here's where you will add some code to rollback on failure      
+  deploy-frontend:
+    docker:
+      # Docker image here that supports AWS CLI
+       - image: amazon/aws-cli
+    steps:
+      # Checkout code from git
+      - checkout 
+
+      - run:
+          name: Install dependencies
+          command: |
+            # your code here
+            curl -sL https://rpm.nodesource.com/setup_12.x | bash -
+            yum install -y nodejs
+            yum install -y tar gzip
+      - run:
+          name: Get backend url
+          command: |
+            # your code here
+            BACKEND_IP=$(aws ec2 describe-instances \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
+              --output text)
+            export API_URL="http://${BACKEND_IP}:3030"
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
+
+      - run:
+          name: Deploy frontend objects
+          command: |
+            cd frontend
+            npm install
+            npm run build
+            aws s3 sync dist s3://udapeople-"${CIRCLE_WORKFLOW_ID}"
+            # your code here
+      # Here's where you will add some code to rollback on failure      
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID}    
+
+      - revert-migrations  
                     
-  #deploy-backend:
-    #docker:
-      ## Docker image here that supports Ansible
-    #steps:
-      ## Checkout code from git
-      ## Add ssh keys with fingerprint
-      ## attach workspace
-      #- run:
-          #name: Install dependencies
-          #command: |
-            ## your code here
-      #- run:
-          #name: Deploy backend
-          #command: |
-            ## your code here
-      ## Here's where you will add some code to rollback on failure  
+  deploy-backend:
+    docker:
+      # Docker image here that supports Ansible
+      - image: python:3.7-alpine3.11
+    steps:
+      # Checkout code from git
+      - checkout
+      # Add ssh keys with fingerprint
+      # attach workspace
+      - add_ssh_keys:
+          fingerprints: ["27:3e:55:11:d5:3f:02:77:42:ee:1b:f3:5b:05:44:0e"]
+
+      - attach_workspace:
+          at: ~/
+
+      - run:
+          name: Install dependencies
+          command: |
+            # your code here
+      - run:
+          name: Deploy backend
+          command: |
+            apk add --update ansible gzip  nodejs npm curl tar 
+            pip install awscli
+      - run:
+          name: Deploy backend
+          command: |
+            touch backend/.env
+            echo ENVIRONMENT=production > "backend/.env"
+            echo TYPEORM_CONNECTION=postgres >> "backend/.env"
+            echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
+            echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
+            echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "backend/.env"
+            echo NODE_ENV=production >> "backend/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"           
+            tar -C backend -czvf backend.tar.gz .
+            cd .circleci/ansible
+            echo "#########"
+            cat inventory.txt
+            echo "#########"
+            ansible-playbook -i inventory.txt deploy-backend.yml
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID}
+
+      - revert-migrations
+      # Here's where you will add some code to rollback on failure  
 
   #smoke-test:
     #docker:
@@ -421,12 +473,16 @@ workflows:
               only: [main]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
+
       - run-migrations:
           requires: [configure-infrastructure]
-      # - deploy-frontend:
-      #     requires: [run-migrations]
-      # - deploy-backend:
-      #     requires: [run-migrations]
+
+      - deploy-frontend:
+          requires: [run-migrations]
+
+      - deploy-backend:
+          requires: [run-migrations]
+
       # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
       # - cloudfront-update:
