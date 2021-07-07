@@ -308,7 +308,6 @@ jobs:
       # Docker image here that supports AWS CLI
        - image: amazon/aws-cli
     steps:
-      # Checkout code from git
       - checkout 
 
       - run:
@@ -328,6 +327,7 @@ jobs:
               --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             export API_URL="http://${BACKEND_IP}:3030"
+            echo "I am done"
             echo "${API_URL}"
 
       - run:
@@ -337,8 +337,7 @@ jobs:
             npm install
             npm run build
             aws s3 sync dist s3://udapeople-"${CIRCLE_WORKFLOW_ID}"
-            # your code here
-      # Here's where you will add some code to rollback on failure      
+
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID}    
 
@@ -389,7 +388,7 @@ jobs:
             cat inventory.txt
             echo "#########"
             ansible-playbook -i inventory.txt deploy-backend.yml
-      - destroy-environment:
+      - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
 
       - revert-migrations
