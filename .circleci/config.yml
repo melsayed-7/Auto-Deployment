@@ -978,25 +978,25 @@ jobs:
 workflows:
   default:
     jobs:
-      - build-frontend:
-          context: SlackAlert
-      - build-backend:
-          context: SlackAlert
-      - test-frontend:
-          requires: [build-frontend]
-          context: SlackAlert
-      - test-backend:
-          requires: [build-backend]
-          context: SlackAlert
-      - scan-backend:
-          requires: [build-backend]
-          context: SlackAlert
-      - scan-frontend:
-          requires: [build-frontend]
-          context: SlackAlert
+      # - build-frontend:
+      #     context: SlackAlert
+      # - build-backend:
+      #     context: SlackAlert
+      # - test-frontend:
+      #     requires: [build-frontend]
+      #     context: SlackAlert
+      # - test-backend:
+      #     requires: [build-backend]
+      #     context: SlackAlert
+      # - scan-backend:
+      #     requires: [build-backend]
+      #     context: SlackAlert
+      # - scan-frontend:
+      #     requires: [build-frontend]
+      #     context: SlackAlert
       - deploy-infrastructure:
           context: SlackAlert
-          requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
           filters:
             branches:
               only: [master]
