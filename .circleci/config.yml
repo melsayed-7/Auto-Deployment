@@ -262,7 +262,7 @@ jobs:
       - restore_cache:
           keys: [backend-build]
 
-      - run:
+      # - run:
           # name: set environment variables
           # command: |
           #   echo ENVIRONMENT=production > "backend/.env"
@@ -277,7 +277,6 @@ jobs:
           #   echo TYPEORM_PASSWORD=postgres123 >> "backend/.env"
           #   echo TYPEORM_DATABASE=udacity-cicd >> "backend/.env"
           #   cat "backend/.env"
-
 
       - run:
           name: Run migrations
