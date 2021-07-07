@@ -338,7 +338,7 @@ jobs:
             npm run build
             aws s3 sync dist s3://udapeople-"${CIRCLE_WORKFLOW_ID}"
 
-      - destroy-environment:
+      - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}    
 
       - revert-migrations  
