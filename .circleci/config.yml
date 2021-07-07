@@ -525,7 +525,6 @@
 version: 2.1
 
 orbs:
-  slack: circleci/slack@4.4.0
   aws-cli: circleci/aws-cli@1.3.0
 
 Parameters:
@@ -583,7 +582,6 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
-      - slack/notify:
           event: fail
           template: basic_fail_1
 
@@ -605,7 +603,6 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
-      - slack/notify:
           event: fail
           template: basic_fail_1
 
@@ -627,7 +624,6 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: frontend-test
-      - slack/notify:
           event: fail
           template: basic_fail_1
                 
@@ -649,7 +645,6 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-test
-      - slack/notify:
           event: fail
           template: basic_fail_1
             
@@ -671,7 +666,6 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: frontend-scan
-      - slack/notify:
           event: fail
           template: basic_fail_1   
 
@@ -693,7 +687,6 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-scan
-      - slack/notify:
           event: fail
           template: basic_fail_1
 
@@ -737,7 +730,6 @@ jobs:
             - project/backend/
       - destroy-environment:
           WorkflowID: ${CIRCLE_WORKFLOW_ID}
-      - slack/notify:
           event: fail
           template: basic_fail_1 
 
@@ -762,12 +754,10 @@ jobs:
             ansible-playbook -i inventory.txt configure-server.yml
       - destroy-environment:
           WorkflowID: ${CIRCLE_WORKFLOW_ID}
-      - slack/notify:
           event: fail
           template: basic_fail_1 
       - destroy-environment:
           WorkflowID: ${CIRCLE_WORKFLOW_ID}
-      - slack/notify:
           event: fail
           template: basic_fail_1    
 
