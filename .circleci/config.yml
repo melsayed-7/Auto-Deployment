@@ -402,10 +402,11 @@ jobs:
             echo "#########"
             ansible-playbook -i inventory.txt deploy-backend.yml
 
-      - destroy-stacks:
-          workflow_id: ${CIRCLE_WORKFLOW_ID}
+      # - destroy-stacks:
+      #     workflow_id: ${CIRCLE_WORKFLOW_ID}
 
-      - revert-migrations
+      # - revert-migrations
+
       # Here's where you will add some code to rollback on failure  
 
   #smoke-test:
@@ -494,15 +495,14 @@ workflows:
       # - configure-infrastructure:
       #     requires: [deploy-infrastructure]
 
-      - run-migrations
-
+      # - run-migrations
           # requires: [configure-infrastructure]
 
-      - deploy-frontend:
-          requires: [run-migrations]
+      - deploy-frontend
+          # requires: [run-migrations]
 
-      - deploy-backend:
-          requires: [run-migrations]
+      # - deploy-backend 
+          # requires: [run-migrations]
 
       # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
