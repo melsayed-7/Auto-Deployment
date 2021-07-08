@@ -3,6 +3,7 @@ version: 2.1
 orbs:
   aws-cli: circleci/aws-cli@2.0.3
   slack: circleci/slack@4.4.2
+  jq: circleci/jq@2.2.0
 
 commands:
   destroy-stacks:
@@ -516,6 +517,7 @@ jobs:
             curl -sL https://rpm.nodesource.com/setup_12.x | bash -
             yum install -y nodejs
             yum install -y tar gzip npm
+      - jq/install
       - run:
           name: Update cloudfront distribution
           command: |
