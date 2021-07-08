@@ -296,19 +296,19 @@ jobs:
             npm run migrations > migrations_ouput.txt
             cat migrations_ouput.txt
 
-      # - run:
-      #     name: Send migration results to memstash
-      #     command: |
-      #       # Your code here
-      #       cd backend
-      #       if grep -q "has been executed successfully" migrations_ouput.txt
-      #         then
-      #           echo "sending 1 to migration_${CIRCLE_WORKFLOW_ID}"
-      #           curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
-      #         else
-      #           echo "sending 0 to migration_${CIRCLE_WORKFLOW_ID}"
-      #           curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
-      #       fi
+      - run:
+          name: Send migration results to memstash
+          command: |
+            # Your code here
+            cd backend
+            if grep -q "has been executed successfully" migrations_ouput.txt
+              then
+                echo "sending 1 to migration_${CIRCLE_WORKFLOW_ID}"
+                curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+              else
+                echo "sending 0 to migration_${CIRCLE_WORKFLOW_ID}"
+                curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+            fi
 
       # - destroy-stacks:
       #     workflow_id: ${CIRCLE_WORKFLOW_ID}
@@ -498,11 +498,11 @@ workflows:
       # - run-migrations
           # requires: [configure-infrastructure]
 
-      - deploy-frontend
-          # requires: [run-migrations]
+      - deploy-frontend:
+          requires: [run-migrations]
 
-      # - deploy-backend 
-          # requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
 
       # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
