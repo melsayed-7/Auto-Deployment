@@ -278,19 +278,19 @@ jobs:
             echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
             echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "backend/.env"
             echo NODE_ENV=production >> "backend/.env"
-            echo TYPEORM_HOST=udacity-cicd.cb0ottxbt0yk.us-west-1.rds.amazonaws.com >> "backend/.env"
-            echo TYPEORM_PORT=5432 >> "backend/.env"
-            echo TYPEORM_USERNAME=postgres    >> "backend/.env"
-            echo TYPEORM_PASSWORD=postgres123 >> "backend/.env"
-            echo TYPEORM_DATABASE=udacity-cicd >> "backend/.env"
-            cat "backend/.env"
+            echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
+            echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
+            echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
+            echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
+            echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
+            cat "backend/.env"      
 
       - run:
           name: Run migrations
           command: |
             # Your code here
             cd backend
-            npm audit fix
+            # npm audit fix
             npm install
             npm run migrations > migrations_ouput.txt
 
@@ -482,11 +482,11 @@ workflows:
       #     filters:
       #       branches:
       #         only: [main]
-      - configure-infrastructure
+      # - configure-infrastructure
     # :
           # requires: [deploy-infrastructure]
-      - run-migrations:
-          requires: [configure-infrastructure]
+      - run-migrations
+          # requires: [configure-infrastructure]
 
       # - deploy-frontend:
       #     requires: [run-migrations]
