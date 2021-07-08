@@ -470,7 +470,7 @@ workflows:
     jobs:
       # - build-frontend
 
-      # - build-backend
+      - build-backend
 
       # - test-frontend:
       #     requires: [build-frontend]
@@ -493,7 +493,9 @@ workflows:
       # - configure-infrastructure:
       #     requires: [deploy-infrastructure]
 
-      - run-migrations
+      - run-migrations:
+          requires: [build-backend]
+
           # requires: [configure-infrastructure]
 
       # - deploy-frontend:
