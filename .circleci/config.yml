@@ -481,6 +481,7 @@ jobs:
       - image: amazon/aws-cli
     steps:
       # Checkout code from git
+      - checkout
       - run:
           name: Install dependencies
           command: |
@@ -490,11 +491,10 @@ jobs:
       - run:
           name: Update cloudfront distribution
           command: |
-            # export OldWorkflowID=$(aws cloudformation list-exports --query "Exports[?Name==\`WorkflowID\`].Value" --no-paginate --output text)
-            # echo "$OldWorkflowID"
-            ls -a
-            # curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "$OldWorkflowID" https://api.memstash.io/values/WorkflowID
-            # aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name udapeople-cloudfront-stack --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}" --tags project=udapeople
+            export OldWorkflowID=$(aws cloudformation list-exports --query "Exports[?Name==\`WorkflowID\`].Value" --no-paginate --output text)
+            echo "$OldWorkflowID"
+            curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "$OldWorkflowID" https://api.memstash.io/values/WorkflowID
+            aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name udapeople-cloudfront-stack --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}" --tags project=udapeople
 
 
       # - destroy-stacks:
@@ -508,6 +508,7 @@ jobs:
 #       - image: amazon/aws-cli
 #     steps:
 #       # Checkout code from git
+      # - checkout
 #       - run:
 #           name: Get old stack workflow id
 #           command: |
@@ -528,6 +529,7 @@ jobs:
   cleanup:
     docker:
       - image: amazon/aws-cli
+
     steps:
       - checkout
       - run:
