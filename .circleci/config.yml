@@ -498,7 +498,6 @@ jobs:
           command: |
             export OldWorkflowID=$(aws cloudformation list-exports --query "Exports[?Name==\`WorkflowID\`].Value" --no-paginate --output text)
             aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name udapeople-stack --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}" --tags project=udapeople
-            # your code here
 
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
@@ -519,15 +518,19 @@ cleanup:
             export STACKS=$(aws cloudformation list-stacks --query "StackSummaries[*].StackName" --stack-status-filter CREATE_COMPLETE --no-paginate --output text)
             echo "${OldWorkflowID}"
             echo "${STACKS[@]}"
-      - run:
-          name: Remove old stacks and files
-          command: |
-            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
-              then
-                aws cloudformation delete-stack --stack-name backend-stack-infra-"${CIRCLE_WORKFLOW_ID}"
-                aws cloudformation delete-stack --stack-name frontend-stack-infra-"${CIRCLE_WORKFLOW_ID}"
-                aws s3 rb --force s3://udapeople-"${CIRCLE_WORKFLOW_ID}"
-            fi
+            aws cloudformation deploy \
+              --template-file .circleci/files/cloudfront.yml \
+              --stack-name udapeople-${CIRCLE_WORKFLOW_ID} \
+              --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID} \
+      # - run:
+      #     name: Remove old stacks and files
+      #     command: |
+            # if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            #   then
+            #     aws cloudformation delete-stack --stack-name backend-stack-infra-"${CIRCLE_WORKFLOW_ID}"
+            #     aws cloudformation delete-stack --stack-name frontend-stack-infra-"${CIRCLE_WORKFLOW_ID}"
+            #     aws s3 rb --force s3://udapeople-"${CIRCLE_WORKFLOW_ID}"
+            # fi
             
 
 workflows:
@@ -567,8 +570,8 @@ workflows:
       # - deploy-backend:
       #     requires: [run-migrations]
 
-      - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
+      # - smoke-test:
+          # requires: [deploy-backend, deploy-frontend]
 
       - cloudfront-update
           # requires: [smoke-test]
