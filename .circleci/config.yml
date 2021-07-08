@@ -14,12 +14,12 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
-            aws cloudformation delete-stack --stack-name frontend-stack
-            #-<<parameters.workflow_id>>
-            aws cloudformation delete-stack --stack-name backend-stack
-            #-<<parameters.workflow_id>>
-            aws s3 rb s3://udapeople
-            #-<<parameters.workflow_id>>
+            aws cloudformation delete-stack --stack-name frontend-stack-<<parameters.workflow_id>>
+            #
+            aws cloudformation delete-stack --stack-name backend-stack-<<parameters.workflow_id>>
+            #
+            aws s3 rb s3://udapeople-<<parameters.workflow_id>>
+            #
 
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
@@ -187,9 +187,9 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
               --tags project="cicd-udacity" \
-              --stack-name "backend-stack" \
+              --stack-name "backend-stack-${CIRCLE_WORKFLOW_ID}" \
               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID}"  
-                                          #-${CIRCLE_WORKFLOW_ID}
+                                          #
 
       - run:
           name: Ensure front-end infrastructure exist
@@ -197,18 +197,22 @@ jobs:
             aws cloudformation deploy \
               --template-file .circleci/files/frontend.yml \
               --tags project="cicd-udacity" \
-              --stack-name "fronend-stack" \
+              --stack-name "fronend-stack-${CIRCLE_WORKFLOW_ID}" \
               --parameter-overrides ID="$CIRCLE_WORKFLOW_ID"  
-              #-${CIRCLE_WORKFLOW_ID}
+              #-
 
       - run:
           name: put ip to ansible inventory text file
           command: |
             aws ec2 describe-instances \
                   --query 'Reservations[*].Instances[*].PublicIpAddress' \
-                  --filters "Name=tag:Name,Values=backend" \
+                  --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
                   --output text >> .circleci/ansible/inventory.txt
-                  #-${CIRCLE_WORKFLOW_ID}
+            echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+            echo "backend IP in inventory is"
+            cat inventory.txt
+            echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+                  #
 
       - persist_to_workspace:
           root: ~/
@@ -310,8 +314,8 @@ jobs:
                 curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
             fi
 
-      # - destroy-stacks:
-      #     workflow_id: ${CIRCLE_WORKFLOW_ID}
+      - destroy-stacks:
+          workflow_id: ${CIRCLE_WORKFLOW_ID}
      # Here's where you will add some code to rollback on failure      
 
   deploy-frontend:
@@ -335,13 +339,19 @@ jobs:
             # npm audit fix
             BACKEND_IP=$(aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --filters "Name=tag:Name,Values=backend" \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
               --output text)
+
+            echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+            echo "backend IP in inventory is"
+            echo "$BACKEND_IP"
+            echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+
             export API_URL="http://${BACKEND_IP}:3030"
             export API_URL="http://${BACKEND_IP}:3030"
             echo "I am done"
             echo "${API_URL}"
-            #-${CIRCLE_WORKFLOW_ID}
+            #
 
       - run:
           name: Deploy frontend objs
@@ -351,8 +361,8 @@ jobs:
             npm run build
             aws s3 sync dist s3://udapeople-"${CIRCLE_WORKFLOW_ID}"
 
-      # - destroy-stacks:
-      #     workflow_id: ${CIRCLE_WORKFLOW_ID}    
+      - destroy-stacks:
+          workflow_id: ${CIRCLE_WORKFLOW_ID}    
 
       # - revert-migrations  
                     
@@ -403,8 +413,8 @@ jobs:
             echo "#########"
             ansible-playbook -i inventory.txt deploy-backend.yml
 
-      # - destroy-stacks:
-      #     workflow_id: ${CIRCLE_WORKFLOW_ID}
+      - destroy-stacks:
+          workflow_id: ${CIRCLE_WORKFLOW_ID}
 
       # - revert-migrations
 
@@ -427,7 +437,7 @@ jobs:
           command: |
             export BACKEND_IP=$(aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --filters "Name=tag:Name,Values=backend" \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
               --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
@@ -443,7 +453,7 @@ jobs:
               else
                 exit 1
             fi
-            # -${CIRCLE_WORKFLOW_ID}
+            # 
             # your code here
       # - run:
       #     name: Frontend smoke test.
@@ -477,8 +487,8 @@ jobs:
             aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name udapeople-stack --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}" --tags project=udapeople
             # your code here
 
-      # - destroy-environment:
-      #     workflow_id: ${CIRCLE_WORKFLOW_ID}
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID}
       # - revert-migrations 
       # Here's where you will add some code to rollback on failure  
 
@@ -526,26 +536,26 @@ workflows:
       # - scan-frontend:
       #     requires: [build-frontend]
 
-      # - deploy-infrastructure:
-      #     # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-      #     filters:
-      #       branches:
-      #         only: [main]
+      - deploy-infrastructure:
+          # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+          filters:
+            branches:
+              only: [main]
 
-      # - configure-infrastructure:
-      #     requires: [deploy-infrastructure]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
 
-      # - run-migrations:
-      #     requires: [configure-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
 
-      # - deploy-frontend:
-      #     requires: [run-migrations]
+      - deploy-frontend:
+          requires: [run-migrations]
 
-      # - deploy-backend:
-      #     requires: [run-migrations]
+      - deploy-backend:
+          requires: [run-migrations]
 
-      - smoke-test
-          # requires: [deploy-backend, deploy-frontend]
+      - smoke-test:
+          requires: [deploy-backend, deploy-frontend]
 
       - cloudfront-update:
           requires: [smoke-test]
