@@ -210,7 +210,7 @@ jobs:
                   --output text >> .circleci/ansible/inventory.txt
             echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
             echo "backend IP in inventory is"
-            cat inventory.txt
+            cat .circleci/ansible/inventory.txt
             echo "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                   #
 
