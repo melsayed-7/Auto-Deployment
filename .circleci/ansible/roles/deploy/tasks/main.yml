@@ -1,0 +1,44 @@
+---
+- name: Update apt packages
+  become: yes
+  apt:
+    update_cache: yes
+
+- name: Create backend directory
+  become: true
+  file:
+    path: /home/ubuntu/backend
+    state: directory
+
+- name: Install dependencies [NodeJS, npm]
+  become: true
+  apt:
+    name: ["nodejs", "npm"]
+    state: latest
+    update_cache: yes
+
+- name: Unarchive backend js files
+  become: yes
+  unarchive:
+    src: /root/project/backend.tar.gz
+    dest: /home/ubuntu/backend
+
+- name: Install pm2
+  become: true
+  npm:
+    name: pm2
+    global: yes
+    production: yes
+    state: present
+
+- name: Build node
+  become: yes
+  shell: |
+    cd /home/ubuntu/backend
+    npm install
+    npm run build
+- name: Initiate server
+  become: yes
+  shell: |
+    cd /home/ubuntu/backend
+    pm2 start npm --name backend -- start
