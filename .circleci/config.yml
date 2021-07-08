@@ -521,25 +521,25 @@ jobs:
 #               --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID} \
 
 
-cleanup:
-  docker:
-    - image: amazon/aws-cli
-  steps:
-    - checkout
-    - run:
-        name: Remove old stacks and files
-        command: |
-          export OldWorkflowID=$(curl -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request GET https://api.memstash.io/values/WorkflowID)
-          export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
-            --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
-          echo "STACKS: ${STACKS}"
-          echo "OldWorkflowID: ${OldWorkflowID}"
-          if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
-          then
-            aws cloudformation delete-stack --stack-name backend-stack-${OldWorkflowID}
-            aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
-            aws cloudformation delete-stack --stack-name frontend-stack-${OldWorkflowID}
-          fi
+  cleanup:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Remove old stacks and files
+          command: |
+            export OldWorkflowID=$(curl -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request GET https://api.memstash.io/values/WorkflowID)
+            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+              --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+            echo "STACKS: ${STACKS}"
+            echo "OldWorkflowID: ${OldWorkflowID}"
+            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            then
+              aws cloudformation delete-stack --stack-name backend-stack-${OldWorkflowID}
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name frontend-stack-${OldWorkflowID}
+            fi
 
       # - run:
       #     name: Remove old stacks and files
