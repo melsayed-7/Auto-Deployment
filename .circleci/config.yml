@@ -490,11 +490,13 @@ jobs:
       - run:
           name: Update cloudfront distribution
           command: |
-            export OldWorkflowID=$(aws cloudformation list-exports --query "Exports[?Name==\`WorkflowID\`].Value" --no-paginate --output text)
-            echo "$OldWorkflowID"
+            # export OldWorkflowID=$(aws cloudformation list-exports --query "Exports[?Name==\`WorkflowID\`].Value" --no-paginate --output text)
+            # echo "$OldWorkflowID"
             ls
-            curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "$OldWorkflowID" https://api.memstash.io/values/WorkflowID
-            aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name udapeople-cloudfront-stack --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}" --tags project=udapeople
+            # curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "$OldWorkflowID" https://api.memstash.io/values/WorkflowID
+            # aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name udapeople-cloudfront-stack --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}" --tags project=udapeople
+
+
       # - destroy-stacks:
       #     workflow_id: ${CIRCLE_WORKFLOW_ID}
       # - revert-migrations 
@@ -598,8 +600,8 @@ workflows:
           # requires: [deploy-infrastructure]
           # requires: [smoke-test]
 
-      - cleanup:
-          requires: [cloudfront-update]
+      # - cleanup:
+      #     requires: [cloudfront-update]
 
 
 
