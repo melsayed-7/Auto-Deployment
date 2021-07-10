@@ -2,6 +2,8 @@ version: 2.1
 
 orbs:
   aws-cli: circleci/aws-cli@2.0.3
+  slack: circleci/slack@4.4.2
+  jq: circleci/jq@2.2.0
 
 commands:
   destroy-stacks:
@@ -18,7 +20,7 @@ commands:
             #
             aws cloudformation delete-stack --stack-name backend-stack-<<parameters.workflow_id>>
             #
-            aws s3 rb s3://udapeople-<<parameters.workflow_id>>
+            aws s3 rb s3://udapeople-<<parameters.workflow_id>> --force
             #
 
   revert-migrations:
@@ -30,13 +32,12 @@ commands:
           when: on_fail
           command: |
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS = 1
+            SUCCESS=$(curl -H "token: 255c255e-cb8e-411d-90e3-27354d90e996" --request GET https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID})
             if(( $SUCCESS==1 )); 
             then
-            #  cd ~/project/backend
-            #  npm install
-            #  Add revert code here. You can find this in the Getting Started section.
-              exit 1
+              cd ~/project/backend
+              npm install
+              npm run migrations:revert
             fi
             
 jobs:
@@ -60,6 +61,9 @@ jobs:
           paths: [frontend/node_modules]
           key: frontend-build
 
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
   build-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -79,6 +83,11 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
+
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+
 
   test-frontend:
     docker:
@@ -124,7 +133,11 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-test
-            
+
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
+
   scan-frontend:
     docker:
       # Docker image here
@@ -147,6 +160,9 @@ jobs:
           paths: [frontend/node_modules]
           key: frontend-scan
 
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
   scan-backend:
     docker:
       # Docker image here
@@ -168,6 +184,10 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-scan
+
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
 
   deploy-infrastructure:
     docker:
@@ -223,6 +243,10 @@ jobs:
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
 
+      # - slack/notify:
+      #     event: fail
+      #     template: basic_fail_1
+
       # Here's where you will add some code to rollback on failure      
 
   configure-infrastructure:
@@ -257,6 +281,9 @@ jobs:
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
 
+      # - slack/notify:
+      #     event: fail
+      #     template: basic_fail_1
       # Here's where you will add some code to rollback on failure      
 
   run-migrations:
@@ -316,6 +343,10 @@ jobs:
 
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
+
+      # - slack/notify:
+      #     event: fail
+      #     template: basic_fail_1
      # Here's where you will add some code to rollback on failure      
 
   deploy-frontend:
@@ -364,6 +395,9 @@ jobs:
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}    
 
+      # - slack/notify:
+      #     event: fail
+      #     template: basic_fail_1
       # - revert-migrations  
                     
   deploy-backend:
@@ -416,6 +450,9 @@ jobs:
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
 
+      # - slack/notify:
+      #     event: fail
+      #     template: basic_fail_1
       # - revert-migrations
 
       # Here's where you will add some code to rollback on failure  
@@ -450,12 +487,6 @@ jobs:
               --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
               --output text)
             export API_URL="http://${BACKEND_IP}:3030"
-
-
-
-
-            export API_URL="http://54.183.56.106:3030"
-
             echo "${API_URL}"
             URL="${API_URL}/api/status"
             echo "$(curl -I ${URL})"
@@ -466,20 +497,12 @@ jobs:
               else
                 exit 1
             fi
-            # 
-            # your code here
-      # - run:
-      #     name: Frontend smoke test.
-      #     command: |
-      #       URL="http://udapeople-${CIRCLE_WORKFLOW_ID}.s3-website-us-west-2.amazonaws.com"
-      #       if curl -s ${URL} | grep "Welcome"
-      #         then
-      #           exit 0
-      #         else
-      #           exit 1
-      #       fi
-            # your code here
-      # Here's where you will add some code to rollback on failure  
+
+      # - revert_migration
+
+      # - slack/notify:
+      #     event: fail
+      #     template: basic_fail_1
 
   cloudfront-update:
     docker:
@@ -487,38 +510,76 @@ jobs:
       - image: amazon/aws-cli
     steps:
       # Checkout code from git
-      - run:
-          name: Install dependencies
-          command: |
-            curl -sL https://rpm.nodesource.com/setup_12.x | bash -
-            yum install -y nodejs
-            yum install -y tar gzip npm
+      - checkout
+      # - run:
+      #     name: Install dependencies
+      #     command: |
+            # curl -sL https://rpm.nodesource.com/setup_12.x | bash -
+            # yum install -y nodejs
+            # yum install -y tar gzip npm
+      # - jq/install
       - run:
           name: Update cloudfront distribution
           command: |
             export OldWorkflowID=$(aws cloudformation list-exports --query "Exports[?Name==\`WorkflowID\`].Value" --no-paginate --output text)
-            aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name udapeople-stack --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}" --tags project=udapeople
-            # your code here
+            echo "$OldWorkflowID"
+            curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "$OldWorkflowID" https://api.memstash.io/values/WorkflowID
+            aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name udapeople-cloudfront-stack --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}" --tags project=udapeople
 
-      - destroy-stacks:
-          workflow_id: ${CIRCLE_WORKFLOW_ID}
+
+      # - destroy-stacks:
+      #     workflow_id: ${CIRCLE_WORKFLOW_ID}
+
       # - revert-migrations 
-      # Here's where you will add some code to rollback on failure  
 
-cleanup:
+      # - slack/notify:
+      #     event: fail
+      #     template: basic_fail_1
+# cleanup:
+#     docker:
+#       # Docker image here
+#       - image: amazon/aws-cli
+#     steps:
+#       # Checkout code from git
+      # - checkout
+#       - run:
+#           name: Get old stack workflow id
+#           command: |
+#             # your code here
+#             export OldWorkflowID=$(aws cloudformation list-exports \
+#             --query "Exports[?Name==\`WorkflowID\`].Value" --no-paginate --output text)
+
+#             export STACKS=$(aws cloudformation list-stacks \
+#             --query "StackSummaries[*].StackName" --stack-status-filter CREATE_COMPLETE --no-paginate --output text)
+#             echo "${OldWorkflowID}"
+#             echo "${STACKS[@]}"
+#             aws cloudformation deploy \
+#               --template-file .circleci/files/cloudfront.yml \
+#               --stack-name udapeople-${CIRCLE_WORKFLOW_ID} \
+#               --parameter-overrides WorkflowID=${CIRCLE_WORKFLOW_ID} \
+
+
+  cleanup:
     docker:
-      # Docker image here
       - image: amazon/aws-cli
+
     steps:
-      # Checkout code from git
+      - checkout
       - run:
-          name: Get old stack workflow id
+          name: Remove old stacks and files
           command: |
-            # your code here
-            export OldWorkflowID=$(aws cloudformation list-exports --query "Exports[?Name==\`WorkflowID\`].Value" --no-paginate --output text)
-            export STACKS=$(aws cloudformation list-stacks --query "StackSummaries[*].StackName" --stack-status-filter CREATE_COMPLETE --no-paginate --output text)
-            echo "${OldWorkflowID}"
-            echo "${STACKS[@]}"
+            export OldWorkflowID=$(curl -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request GET https://api.memstash.io/values/WorkflowID)
+            export STACKS=($(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+              --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+            echo "STACKS: ${STACKS}"
+            echo "OldWorkflowID: ${OldWorkflowID}"
+            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+            then
+              aws cloudformation delete-stack --stack-name backend-stack-${OldWorkflowID}
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name frontend-stack-${OldWorkflowID}
+            fi
+
       - run:
           name: Remove old stacks and files
           command: |
@@ -526,7 +587,8 @@ cleanup:
               then
                 aws cloudformation delete-stack --stack-name backend-stack-infra-"${CIRCLE_WORKFLOW_ID}"
                 aws cloudformation delete-stack --stack-name frontend-stack-infra-"${CIRCLE_WORKFLOW_ID}"
-                aws s3 rb --force s3://udapeople-"${CIRCLE_WORKFLOW_ID}"
+                aws s3 rm  s3://udapeople-"${CIRCLE_WORKFLOW_ID}" --recursive
+                # aws s3 rb  s3://udapeople-"${CIRCLE_WORKFLOW_ID}" --force
             fi
             
 
@@ -567,13 +629,16 @@ workflows:
       # - deploy-backend:
       #     requires: [run-migrations]
 
-      - smoke-test
-          # requires: [deploy-backend, deploy-frontend]
+      # - smoke-test:
+      #     requires: [deploy-backend, deploy-frontend]
 
-      - cloudfront-update
+      - cloudfront-update:
+          context: slack-siren
+          # requires: [deploy-infrastructure]
           # requires: [smoke-test]
-      # - cleanup:
-      #     requires: [cloudfront-update]
+
+      - cleanup:
+          requires: [cloudfront-update]
 
 
 
