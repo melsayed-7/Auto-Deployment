@@ -585,8 +585,8 @@ jobs:
           command: |
             if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
               then
-                aws cloudformation delete-stack --stack-name backend-stack-infra-"${CIRCLE_WORKFLOW_ID}"
-                aws cloudformation delete-stack --stack-name frontend-stack-infra-"${CIRCLE_WORKFLOW_ID}"
+                aws cloudformation delete-stack --stack-name backend-stack-"${CIRCLE_WORKFLOW_ID}"
+                aws cloudformation delete-stack --stack-name frontend-stack-"${CIRCLE_WORKFLOW_ID}"
                 # aws s3 rm  s3://udapeople-"${CIRCLE_WORKFLOW_ID}" --recursive
                 # aws s3 rb  s3://udapeople-"${CIRCLE_WORKFLOW_ID}" --force
             fi
