@@ -245,9 +245,9 @@ jobs:
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
 
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
+      # - slack/notify:
+      #     event: fail
+      #     template: basic_fail_1
 
       # Here's where you will add some code to rollback on failure      
 
@@ -283,9 +283,9 @@ jobs:
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
 
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
+      # - slack/notify:
+      #     event: fail
+      #     template: basic_fail_1
       # Here's where you will add some code to rollback on failure      
 
   run-migrations:
@@ -346,9 +346,9 @@ jobs:
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
 
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
+      # - slack/notify:
+      #     event: fail
+      #     template: basic_fail_1
      # Here's where you will add some code to rollback on failure      
 
   deploy-frontend:
@@ -397,9 +397,9 @@ jobs:
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}    
 
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
+      # - slack/notify:
+      #     event: fail
+      #     template: basic_fail_1
       # - revert-migrations  
                     
   deploy-backend:
@@ -452,9 +452,9 @@ jobs:
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
 
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
+      # - slack/notify:
+      #     event: fail
+      #     template: basic_fail_1
       # - revert-migrations
 
       # Here's where you will add some code to rollback on failure  
@@ -502,9 +502,9 @@ jobs:
 
       # - revert_migration
 
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
+      # - slack/notify:
+      #     event: fail
+      #     template: basic_fail_1
 
   cloudfront-update:
     docker:
@@ -534,9 +534,9 @@ jobs:
 
       # - revert-migrations 
 
-      - slack/notify:
-          event: fail
-          template: basic_fail_1
+      # - slack/notify:
+      #     event: fail
+      #     template: basic_fail_1
 # cleanup:
 #     docker:
 #       # Docker image here
