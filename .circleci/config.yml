@@ -587,7 +587,7 @@ jobs:
               then
                 aws cloudformation delete-stack --stack-name backend-stack-infra-"${CIRCLE_WORKFLOW_ID}"
                 aws cloudformation delete-stack --stack-name frontend-stack-infra-"${CIRCLE_WORKFLOW_ID}"
-                aws s3 rm  s3://udapeople-"${CIRCLE_WORKFLOW_ID}" --recursive
+                # aws s3 rm  s3://udapeople-"${CIRCLE_WORKFLOW_ID}" --recursive
                 # aws s3 rb  s3://udapeople-"${CIRCLE_WORKFLOW_ID}" --force
             fi
             
@@ -632,13 +632,13 @@ workflows:
       # - smoke-test:
       #     requires: [deploy-backend, deploy-frontend]
 
-      - cloudfront-update:
-          context: slack-siren
+      # - cloudfront-update:
+      #     context: slack-siren
           # requires: [deploy-infrastructure]
           # requires: [smoke-test]
 
       - cleanup
-          requires: [cloudfront-update]
+          # requires: [cloudfront-update]
 
 
 
