@@ -500,7 +500,7 @@ jobs:
                 exit 1
             fi
 
-      - revert_migration
+      # - revert_migration
 
       - slack/notify:
           event: fail
