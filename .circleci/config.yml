@@ -151,8 +151,8 @@ jobs:
       # Checkout code from git
       - checkout
       # Restore from cache
-      # - restore_cache:
-      #     keys: [frontend-scan]
+      - restore_cache:
+          keys: [frontend-scan]
       # Your job code here
       - run:
           name: Frontend Scan
@@ -160,7 +160,7 @@ jobs:
             echo "Install dependencies"
             cd frontend
             npm install 
-            # npm audit fix --audit-level=critical --force
+            npm audit fix --audit-level=critical --force
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-scan
@@ -177,8 +177,8 @@ jobs:
       # Checkout code from git
       - checkout
       # Restore from cache
-      - restore_cache:
-          keys: [backend-scan]
+      # - restore_cache:
+      #     keys: [backend-scan]
       # Your job code here
       - run:
           name: Backend Scan
@@ -186,7 +186,7 @@ jobs:
             echo "Install dependencies"
             cd backend
             npm install 
-            npm audit fix --audit-level=critical --force
+            # npm audit fix --audit-level=critical --force
       - save_cache:
           paths: [backend/node_modules]
           key: backend-scan
@@ -524,10 +524,10 @@ workflows:
       # - test-backend:
       #     requires: [build-backend]
 
-      # - scan-backend:
+      - scan-backend
       #     requires: [build-backend]
 
-      - scan-frontend
+      # - scan-frontend:
           # requires: [build-frontend]
 
 #       - deploy-infrastructure:
