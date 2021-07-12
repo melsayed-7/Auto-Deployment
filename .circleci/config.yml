@@ -17,11 +17,12 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
+            aws s3 rb s3://udapeople-<<parameters.workflow_id>> --force
+
             aws cloudformation delete-stack --stack-name frontend-stack-<<parameters.workflow_id>>
             #
             aws cloudformation delete-stack --stack-name backend-stack-<<parameters.workflow_id>>
             #
-            aws s3 rb s3://udapeople-<<parameters.workflow_id>> --force
             #
 
   revert-migrations:
@@ -254,7 +255,7 @@ jobs:
 
       # Add ssh keys with fingerprint
       - add_ssh_keys:
-          fingerprints: ["27:3e:55:11:d5:3f:02:77:42:ee:1b:f3:5b:05:44:0e"]
+          fingerprints: ["3f:d8:64:27:60:a6:f9:4e:17:0c:8d:7c:f4:bc:f6:3a"]
 
       # attach workspace
       - attach_workspace:
@@ -378,7 +379,7 @@ jobs:
       # Add ssh keys with fingerprint
       # attach workspace
       - add_ssh_keys:
-          fingerprints: ["27:3e:55:11:d5:3f:02:77:42:ee:1b:f3:5b:05:44:0e"]
+          fingerprints:  ["3f:d8:64:27:60:a6:f9:4e:17:0c:8d:7c:f4:bc:f6:3a"]
 
       - attach_workspace:
           at: ~/
@@ -455,6 +456,8 @@ jobs:
 
       - revert-migrations
 
+      - destroy-stacks:
+          workflow_id: ${CIRCLE_WORKFLOW_ID}
 
   cloudfront-update:
     docker:
