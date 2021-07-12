@@ -315,7 +315,7 @@ jobs:
                 curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
             fi
 
-      - revert-migration
+      - revert-migrations
 
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
@@ -454,7 +454,7 @@ jobs:
             fi
                 exit 1
 
-      - revert-migration
+      - revert-migrations
 
 
   cloudfront-update:
