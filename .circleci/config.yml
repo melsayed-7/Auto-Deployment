@@ -5,6 +5,7 @@ orbs:
   slack: circleci/slack@4.4.2
   jq: circleci/jq@2.2.0
 
+
 commands:
   destroy-stacks:
     description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
@@ -61,9 +62,9 @@ jobs:
           paths: [frontend/node_modules]
           key: frontend-build
 
-      # - slack/notify:
-      #     event: fail
-      #     template: basic_fail_1
+      - destroy-stacks:
+          workflow_id: ${CIRCLE_WORKFLOW_ID}
+
   build-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -84,9 +85,8 @@ jobs:
           paths: [backend/node_modules]
           key: backend-build
 
-      # - slack/notify:
-      #     event: fail
-      #     template: basic_fail_1
+      - destroy-stacks:
+          workflow_id: ${CIRCLE_WORKFLOW_ID}
 
 
   test-frontend:
@@ -111,6 +111,9 @@ jobs:
           paths: [frontend/node_modules]
           key: frontend-test
                 
+      - destroy-stacks:
+          workflow_id: ${CIRCLE_WORKFLOW_ID}
+
   test-backend:
     docker:
       # Docker image here
@@ -134,10 +137,8 @@ jobs:
           paths: [backend/node_modules]
           key: backend-test
 
-      # - slack/notify:
-      #     event: fail
-      #     template: basic_fail_1
-
+      - destroy-stacks:
+          workflow_id: ${CIRCLE_WORKFLOW_ID}
   scan-frontend:
     docker:
       # Docker image here
@@ -160,9 +161,8 @@ jobs:
           paths: [frontend/node_modules]
           key: frontend-scan
 
-      # - slack/notify:
-      #     event: fail
-      #     template: basic_fail_1
+      - destroy-stacks:
+          workflow_id: ${CIRCLE_WORKFLOW_ID}
   scan-backend:
     docker:
       # Docker image here
@@ -185,9 +185,8 @@ jobs:
           paths: [backend/node_modules]
           key: backend-scan
 
-      # - slack/notify:
-      #     event: fail
-      #     template: basic_fail_1
+      - destroy-stacks:
+          workflow_id: ${CIRCLE_WORKFLOW_ID}
 
   deploy-infrastructure:
     docker:
@@ -243,11 +242,6 @@ jobs:
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
 
-      # - slack/notify:
-      #     event: fail
-      #     template: basic_fail_1
-
-      # Here's where you will add some code to rollback on failure      
 
   configure-infrastructure:
     docker:
@@ -281,10 +275,6 @@ jobs:
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
 
-      # - slack/notify:
-      #     event: fail
-      #     template: basic_fail_1
-      # Here's where you will add some code to rollback on failure      
 
   run-migrations:
     docker:
@@ -299,22 +289,6 @@ jobs:
 
       - restore_cache:
           keys: [backend-build]
-
-      # - run:
-      #     name: set environment variables
-      #     command: |
-            # echo ENVIRONMENT=production > "backend/.env"
-            # echo TYPEORM_CONNECTION=postgres >> "backend/.env"
-            # echo TYPEORM_ENTITIES=./src/modules/domain/**/*.entity.ts >> "backend/.env"
-            # echo TYPEORM_MIGRATIONS=./src/migrations/*.ts >> "backend/.env"
-            # echo TYPEORM_MIGRATIONS_DIR=./src/migrations >> "backend/.env"
-            # echo NODE_ENV=production >> "backend/.env"
-            # echo TYPEORM_HOST=$TYPEORM_HOST >> "backend/.env"
-            # echo TYPEORM_PORT=$TYPEORM_PORT >> "backend/.env"
-            # echo TYPEORM_USERNAME=$TYPEORM_USERNAME >> "backend/.env"
-            # echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> "backend/.env"
-            # echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> "backend/.env"
-            # cat "backend/.env"      
 
       - run:
           name: Run migrations
@@ -341,12 +315,10 @@ jobs:
                 curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
             fi
 
+      - revert_migration
+
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
-
-      # - slack/notify:
-      #     event: fail
-      #     template: basic_fail_1
      # Here's where you will add some code to rollback on failure      
 
   deploy-frontend:
@@ -395,10 +367,6 @@ jobs:
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}    
 
-      # - slack/notify:
-      #     event: fail
-      #     template: basic_fail_1
-      # - revert-migrations  
                     
   deploy-backend:
     docker:
@@ -450,10 +418,6 @@ jobs:
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
 
-      # - slack/notify:
-      #     event: fail
-      #     template: basic_fail_1
-      # - revert-migrations
 
       # Here's where you will add some code to rollback on failure  
 
@@ -469,15 +433,6 @@ jobs:
           command: |
             apk add --update curl nodejs npm
             pip install awscli
-      - run:
-          name: Get backend url
-          command: |
-            export BACKEND_IP=$(aws ec2 describe-instances \
-              --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
-              --output text)
-            export API_URL="http://${BACKEND_IP}:3030"
-            echo "${API_URL}"
 
       - run:
           name: Backend smoke test.
@@ -497,12 +452,10 @@ jobs:
               else
                 exit 1
             fi
+                exit 1
 
-      # - revert_migration
+      - revert_migration
 
-      # - slack/notify:
-      #     event: fail
-      #     template: basic_fail_1
 
   cloudfront-update:
     docker:
@@ -521,19 +474,20 @@ jobs:
       - run:
           name: Update cloudfront distribution
           command: |
+            aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name udapeople-cloudfront-stack --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}" --tags project=udapeople
+
             export OldWorkflowID=$(aws cloudformation list-exports --query "Exports[?Name==\`WorkflowID\`].Value" --no-paginate --output text)
             echo "$OldWorkflowID"
             curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "$OldWorkflowID" https://api.memstash.io/values/WorkflowID
-            aws cloudformation deploy --template-file .circleci/files/cloudfront.yml --stack-name udapeople-cloudfront-stack --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID}" --tags project=udapeople
+
+      - revert-migrations 
 
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
 
-      - revert-migrations 
-
-      # - slack/notify:
-      #     event: fail
-      #     template: basic_fail_1
+      - slack/notify:
+          event: fail
+          template: basic_fail_1
 
 
   cleanup:
@@ -555,7 +509,7 @@ jobs:
                 aws s3 rm  s3://udapeople-"${OldWorkflowID}" --recursive
                 aws cloudformation delete-stack --stack-name backend-stack-"${OldWorkflowID}"
                 aws cloudformation delete-stack --stack-name frontend-stack-"${OldWorkflowID}"
-                # aws s3 rb  s3://udapeople-"${CIRCLE_WORKFLOW_ID}" --force
+                aws s3 rb  s3://udapeople-"${CIRCLE_WORKFLOW_ID}" --force
             fi
             
 
@@ -601,7 +555,6 @@ workflows:
 
       - cloudfront-update:
           context: slack-siren
-          # requires: [deploy-infrastructure]
           requires: [smoke-test]
 
       - cleanup:
