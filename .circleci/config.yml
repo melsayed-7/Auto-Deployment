@@ -373,7 +373,10 @@ jobs:
             apk add --update gzip
             apk add --update curl
             apk add --update openssh-client
+            apk add --update npm
+
             pip install awscli
+
             # apk add --update ansible nodejs npm rsync openssh
 
 
