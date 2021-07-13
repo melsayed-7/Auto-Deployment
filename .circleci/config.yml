@@ -571,7 +571,8 @@ workflows:
 
       - cloudfront-update:
           context: slack-siren
-          requires: [smoke-test]
+          requires: [deploy-backend]
+          # requires: [smoke-test]
           filters:
             branches:
               only: [main]
