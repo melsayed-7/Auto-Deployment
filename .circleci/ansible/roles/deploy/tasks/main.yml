@@ -23,6 +23,11 @@
     src: /root/project/backend.tar.gz
     dest: /home/ubuntu/backend
 
+- name: Copy backend dist files web server
+  copy:
+    src: /root/project/backend
+    dest: /home/ubuntu
+
 - name: Install pm2
   become: true
   npm:
@@ -37,6 +42,7 @@
     cd /home/ubuntu/backend
     npm install
     npm run build
+
 - name: Initiate server
   become: yes
   shell: |
