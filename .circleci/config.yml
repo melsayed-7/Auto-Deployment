@@ -357,10 +357,7 @@ jobs:
       # Docker image here that supports Ansible
       - image: python:3.7-alpine3.11
     steps:
-      # Checkout code from git
       - checkout
-      # Add ssh keys with fingerprint
-      # attach workspace
       - add_ssh_keys:
           fingerprints:  ["3f:d8:64:27:60:a6:f9:4e:17:0c:8d:7c:f4:bc:f6:3a"]
 
@@ -377,7 +374,7 @@ jobs:
             apk add --update curl
             apk add --update openssh-client
             pip install awscli
-            apk add --update ansible nodejs npm rsync openssh
+            # apk add --update ansible nodejs npm rsync openssh
 
 
       - run:
@@ -397,6 +394,7 @@ jobs:
             echo TYPEORM_PASSWORD=$TYPEORM_PASSWORD >> .env
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> .env
 
+            export ANSIBLE_HOST_KEY_CHECKING=False
             # tar -C backend -czvf backend.tar.gz .
               
             cd ../.circleci/ansible
