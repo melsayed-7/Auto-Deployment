@@ -32,7 +32,7 @@ commands:
           when: on_fail
           command: |
             # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS=$(curl -H "token: 255c255e-cb8e-411d-90e3-27354d90e996" --request GET https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID})
+            SUCCESS=$(curl -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request GET https://api.memstash.io/values/migration)
             if(( $SUCCESS==1 )); 
             then
               cd ~/project/backend
@@ -316,10 +316,10 @@ jobs:
             if grep -q "has been executed successfully" migrations_ouput.txt
               then
                 echo "sending 1 to migration_${CIRCLE_WORKFLOW_ID}"
-                curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "1" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+                curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "1" https://api.memstash.io/values/migration
               else
                 echo "sending 0 to migration_${CIRCLE_WORKFLOW_ID}"
-                curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "0" https://api.memstash.io/values/migration_${CIRCLE_WORKFLOW_ID}
+                curl -H "Content-Type: text/plain" -H "token: be4667cf-cd29-4c22-ad36-2be5b4e85c4f" --request PUT --data "0" https://api.memstash.io/values/migration
             fi
 
       - revert-migrations
@@ -442,10 +442,10 @@ jobs:
       - run:
           name: Backend smoke test.
           command: |
-            # exit 1
+            exit 1
             export BACKEND_IP=$(aws ec2 describe-instances \
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
-              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID}" \
+              --filters "Name=tag:Name,Values=backend" \
               --output text)
             export API_URL="http://${BACKEND_IP}:3030" #"http://54.67.64.90:3030"
             echo "${API_URL}"
