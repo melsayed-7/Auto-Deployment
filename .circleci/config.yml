@@ -432,7 +432,7 @@ jobs:
               --filters "Name=tag:Name,Values=backend" \
               --output text)
 
-            export API_URL="http://${BACKEND_IP}:3030" #"http://54.67.64.90:3030"
+            export API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
             URL="${API_URL}/api/status"
 
@@ -446,10 +446,10 @@ jobs:
                 exit 1
             fi
 
-      - destroy-stacks:
-          workflow_id: ${CIRCLE_WORKFLOW_ID}
+      # - destroy-stacks:
+      #     workflow_id: ${CIRCLE_WORKFLOW_ID}
 
-      - revert-migrations
+      # - revert-migrations
 
 
   cloudfront-update:
@@ -556,16 +556,16 @@ workflows:
             branches:
               only: [main]
 
-      - smoke-test:
-          requires: [deploy-backend, deploy-frontend]
-          filters:
-            branches:
-              only: [main]
+      # - smoke-test:
+      #     requires: [deploy-backend, deploy-frontend]
+      #     filters:
+      #       branches:
+      #         only: [main]
 
       - cloudfront-update:
           context: slack-siren
-          # requires: [deploy-backend]
-          requires: [smoke-test]
+          requires: [deploy-backend, deploy-frontend]
+          # requires: [smoke-test]
           filters:
             branches:
               only: [main]
