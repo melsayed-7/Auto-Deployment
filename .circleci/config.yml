@@ -382,7 +382,6 @@ jobs:
           command: |
             echo 18.144.90.124 >> .circleci/ansible/inventory.txt
 
-            tar -C backend -czvf backend.tar.gz .
 
             cd ./backend 
             npm install
@@ -400,9 +399,17 @@ jobs:
 
             export ANSIBLE_HOST_KEY_CHECKING=False
 
-            cd ../.circleci/ansible
+            cd ..
+            tar -C backend -czvf backend.tar.gz .
+
+            cd .circleci/ansible
+
+            echo "#########"
+            cat inventory.txt
+            echo "#########"
 
             echo "begin play"
+
             ansible-playbook -i inventory.txt deploy-backend.yml --extra-vars "TYPEORM_HOST=${TYPEORM_HOST} TYPEORM_PORT=${TYPEORM_PORT} TYPEORM_USERNAME=${TYPEORM_USERNAME} TYPEORM_PASSWORD=${TYPEORM_PASSWORD} TYPEORM_DATABASE=${TYPEORM_DATABASE}"
 
           no_output_timeout: 60m
