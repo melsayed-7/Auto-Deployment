@@ -398,13 +398,14 @@ jobs:
             echo TYPEORM_DATABASE=$TYPEORM_DATABASE >> .env
 
             export ANSIBLE_HOST_KEY_CHECKING=False
-            # tar -C backend -czvf backend.tar.gz .
+
+            cd ..
+            tar -C backend -czvf backend.tar.gz .
               
-            cd ../.circleci/ansible
             # echo "#########"
             # cat inventory.txt
             # echo "#########"
-
+            cd .circleci/ansible
             ansible-playbook -i inventory.txt deploy-backend.yml
 
       # - destroy-stacks:
