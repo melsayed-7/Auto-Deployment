@@ -439,7 +439,6 @@ jobs:
             echo "$(curl -I ${URL})"
             echo "${URL}"
 
-            exit 1
             if curl -s ${URL} | grep "ok"
               then
                 exit 0
