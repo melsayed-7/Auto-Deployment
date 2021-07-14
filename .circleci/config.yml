@@ -377,7 +377,9 @@ jobs:
             apk add --update curl
             apk add --update openssh-client
             apk add --update npm
+            apk add tree
             pip install awscli
+
 
 
       - run:
@@ -387,7 +389,8 @@ jobs:
             tar -C backend -czvf artifact.tar.gz .
 
 
-
+            tree .
+            echo "put shit"
             echo 13.57.231.196 >> .circleci/ansible/inventory.txt
 
 
