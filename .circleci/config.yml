@@ -361,28 +361,41 @@ jobs:
       - add_ssh_keys:
           fingerprints:  ["3f:d8:64:27:60:a6:f9:4e:17:0c:8d:7c:f4:bc:f6:3a"]
 
+      - restore_cache:
+          keys: [backend-build]
+
       - attach_workspace:
           at: ~/
+
 
       - run:
           name: Install dependencies
           command: |
-            # your code here
             apk add --update ansible
             apk add --update tar
             apk add --update gzip
             apk add --update curl
             apk add --update openssh-client
             apk add --update npm
-
             pip install awscli
 
-            # apk add --update ansible nodejs npm rsync openssh
-
+      - run:
+          name: compress backend
+          command: |
+            tar -C backend -czvf artifact.tar.gz .
 
       - run:
           name: Deploy backend
           command: |
+
+
+
+
+            echo 13.57.231.196 >> .circleci/ansible/inventory.txt
+
+
+
+
             cd ./backend 
             npm install
             touch .env
@@ -399,16 +412,10 @@ jobs:
 
             export ANSIBLE_HOST_KEY_CHECKING=False
 
-            cd ..
-            tar -C backend -czvf backend.tar.gz .
-              
-            # echo "#########"
-            # cat inventory.txt
-            # echo "#########"
-            cd .circleci/ansible
+            cd ../.circleci/ansible
             ansible-playbook -i inventory.txt deploy-backend.yml
 
-          no_output_timeout: 30m
+          no_output_timeout: 60m
       # - destroy-stacks:
       #     workflow_id: ${CIRCLE_WORKFLOW_ID}
 
@@ -433,6 +440,7 @@ jobs:
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --filters "Name=tag:Name,Values=backend" \
               --output text)
+
             export API_URL="http://${BACKEND_IP}:3030" #"http://54.67.64.90:3030"
             echo "${API_URL}"
             URL="${API_URL}/api/status"
@@ -525,33 +533,33 @@ workflows:
       # - scan-backend:
       #     requires: [build-backend]
 
-      - deploy-infrastructure:
-          # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          filters:
-            branches:
-              only: [main]
+      # - deploy-infrastructure:
+      #     # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+      #     filters:
+      #       branches:
+      #         only: [main]
 
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
-          filters:
-            branches:
-              only: [main]
+      # - configure-infrastructure:
+      #     requires: [deploy-infrastructure]
+      #     filters:
+      #       branches:
+      #         only: [main]
 
-      - run-migrations:
-          requires: [configure-infrastructure]
-          # requires: [test-frontend, test-backend, scan-frontend, scan-backend]          
-          filters:
-            branches:
-              only: [main]
+      # - run-migrations:
+      #     requires: [configure-infrastructure]
+      #     # requires: [test-frontend, test-backend, scan-frontend, scan-backend]          
+      #     filters:
+      #       branches:
+      #         only: [main]
 
-      - deploy-frontend:
-          requires: [run-migrations]
-          filters:
-            branches:
-              only: [main]
+      # - deploy-frontend:
+      #     requires: [run-migrations]
+      #     filters:
+      #       branches:
+      #         only: [main]
 
       - deploy-backend:
-          requires: [run-migrations]
+          # requires: [run-migrations]
           filters:
             branches:
               only: [main]
