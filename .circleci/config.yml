@@ -339,8 +339,6 @@ jobs:
             npm run build
             aws s3 cp ./dist s3://udapeople-"${CIRCLE_WORKFLOW_ID}" --recursive
 
-            #
-
       - run:
           name: Deploy frontend objs
           command: |
@@ -387,12 +385,6 @@ jobs:
           command: |
 
             tar -C backend -czvf backend.tar.gz .
-
-
-            echo 13.57.231.196 >> .circleci/ansible/inventory.txt
-
-
-
 
             cd ./backend 
             npm install
@@ -447,6 +439,7 @@ jobs:
             echo "$(curl -I ${URL})"
             echo "${URL}"
 
+            exit 1
             if curl -s ${URL} | grep "ok"
               then
                 exit 0
@@ -454,10 +447,11 @@ jobs:
                 exit 1
             fi
 
-      - revert-migrations
-
       - destroy-stacks:
           workflow_id: ${CIRCLE_WORKFLOW_ID}
+
+      - revert-migrations
+
 
   cloudfront-update:
     docker:
@@ -532,50 +526,50 @@ workflows:
       # - scan-backend:
       #     requires: [build-backend]
 
-      # - deploy-infrastructure:
-      #     # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-      #     filters:
-      #       branches:
-      #         only: [main]
-
-      # - configure-infrastructure:
-      #     requires: [deploy-infrastructure]
-      #     filters:
-      #       branches:
-      #         only: [main]
-
-      # - run-migrations:
-      #     requires: [configure-infrastructure]
-      #     # requires: [test-frontend, test-backend, scan-frontend, scan-backend]          
-      #     filters:
-      #       branches:
-      #         only: [main]
-
-      # - deploy-frontend:
-      #     requires: [run-migrations]
-      #     filters:
-      #       branches:
-      #         only: [main]
-
-      - deploy-backend:
-          # requires: [run-migrations]
+      - deploy-infrastructure:
+          # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
           filters:
             branches:
               only: [main]
 
-#       - smoke-test:
-#           requires: [deploy-backend, deploy-frontend]
-#           filters:
-#             branches:
-#               only: [main]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
+          filters:
+            branches:
+              only: [main]
 
-#       - cloudfront-update:
-#           context: slack-siren
-#           # requires: [deploy-backend]
-#           requires: [smoke-test]
-#           filters:
-#             branches:
-#               only: [main]
+      - run-migrations:
+          requires: [configure-infrastructure]
+          # requires: [test-frontend, test-backend, scan-frontend, scan-backend]          
+          filters:
+            branches:
+              only: [main]
 
-#       - cleanup:
-#           requires: [cloudfront-update]
+      - deploy-frontend:
+          requires: [run-migrations]
+          filters:
+            branches:
+              only: [main]
+
+      - deploy-backend:
+          requires: [run-migrations]
+          filters:
+            branches:
+              only: [main]
+
+      - smoke-test:
+          requires: [deploy-backend, deploy-frontend]
+          filters:
+            branches:
+              only: [main]
+
+      - cloudfront-update:
+          context: slack-siren
+          # requires: [deploy-backend]
+          requires: [smoke-test]
+          filters:
+            branches:
+              only: [main]
+
+      # - cleanup:
+      #     requires: [cloudfront-update]
