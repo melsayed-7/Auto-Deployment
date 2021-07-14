@@ -565,15 +565,15 @@ workflows:
       #       branches:
       #         only: [main]
 
-      - deploy-backend:
-          # requires: [run-migrations]
-          filters:
-            branches:
-              only: [main]
+      # - deploy-backend:
+      #     # requires: [run-migrations]
+      #     filters:
+      #       branches:
+      #         only: [main]
 
       - deploy-frontend:
           # requires: [run-migrations]
-          requires: [deploy-backend]
+          # requires: [deploy-backend]
           filters:
             branches:
               only: [main]
