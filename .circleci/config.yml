@@ -352,8 +352,8 @@ jobs:
                     
   deploy-backend:
     docker:
-      # Docker image here that supports Ansible
       - image: python:3.7-alpine3.11
+
     steps:
       - checkout
       - add_ssh_keys:
@@ -364,7 +364,6 @@ jobs:
 
       - attach_workspace:
           at: ~/
-
 
       - run:
           name: Install dependencies
@@ -378,12 +377,10 @@ jobs:
             apk add tree
             pip install awscli
 
-
-
       - run:
           name: Deploy backend
           command: |
-            echo 3.101.30.180 >> .circleci/ansible/inventory.txt
+            # echo 3.101.30.180 >> .circleci/ansible/inventory.txt
 
             tar -C backend -czvf backend.tar.gz .
 
@@ -406,7 +403,7 @@ jobs:
             cd ../.circleci/ansible
 
             echo "begin play"
-            ansible-playbook -i inventory.txt deploy-backend.yml
+            ansible-playbook -i inventory.txt deploy-backend.yml --extra-vars "TYPEORM_HOST=${TYPEORM_HOST} TYPEORM_PORT=${TYPEORM_PORT} TYPEORM_USERNAME=${TYPEORM_USERNAME} TYPEORM_PASSWORD=${TYPEORM_PASSWORD} TYPEORM_DATABASE=${TYPEORM_DATABASE}"
 
           no_output_timeout: 60m
       # - destroy-stacks:
