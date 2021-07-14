@@ -386,11 +386,9 @@ jobs:
           name: Deploy backend
           command: |
 
-            tar -C backend -czvf artifact.tar.gz .
+            tar -C backend -czvf backend.tar.gz .
 
 
-            tree .
-            echo "put shit"
             echo 13.57.231.196 >> .circleci/ansible/inventory.txt
 
 
